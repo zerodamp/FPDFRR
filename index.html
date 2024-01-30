@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kelimeleri Göster</title>
+    <style>
+        body {
+            text-align: center;
+            margin: 0;
+            padding: 0;
+            font-size: 18px;
+            background-color: black;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            font-family: Arial, sans-serif;
+        }
+
+        #wordList li {
+            display: none;
+        }
+
+        #wordList li.active {
+            display: inline;
+            color: rgb(255, 255, 255);
+            font-size: 36px;
+        }
+
+        h1 {
+            color: #ff4500;
+            display: none;
+        }
+
+        input[type="file"],
+        button,
+        label {
+            display: block;
+            margin: 10px auto;
+            padding: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            background-color: #fff;
+            color: #000;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        #languageSelector {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            display: flex;
+            gap: 10px;
+        }
+
+        #languageSelector img {
+            width: 30px;
+            height: 30px;
+            cursor: pointer;
+        }
+
+        #wpmInputBox {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 20px;
+            display: none;
+        }
+
+        #wpmLabel {
+            margin-bottom: 5px;
+        }
+
+        #wpmInput {
+            padding: 8px;
+            font-size: 14px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+
+        #startButton {
+            background-color: #4caf50;
+            color: #fff;
+            transition: background-color 0.3s;
+        }
+
+        #startButton:hover {
+            background-color: #45a049;
+        }
+
+        #translateButton {
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="languageSelector">
+        <img src="tr.png" alt="Turkish" onclick="changeLanguage('tr')">
+        <img src="eng.png" alt="English" onclick="changeLanguage('en')">
+        <img src="ger.png" alt="German" onclick="changeLanguage('de')">
+        <img src="rus.png" alt="Russian" onclick="changeLanguage('ru')">
+        <img src="isp.png" alt="Spanish" onclick="changeLanguage('es')">
+    </div>
+
+    <h1 id="title">Tüm Kelimeler</h1>
+    <button onclick="redirectToTranslate()" id="translateButton">.pdf .txt Dönüştür</button>
+    <label for="fileInput" id="fileLabel">Dosya Seç</label>
+    <input type="file" id="fileInput" accept=".txt">
+    <button onclick="handleFile()" id="fileButton">Dosyayı Yükle</button>
+
+    <div id="wpmInputBox">
+        <p id="wpmLabel">Dakikada gösterilecek kelime sayısı:</p>
+        <input type="number" id="wpmInput" placeholder="Kelime sayısı" />
+        <button onclick="startWordInterval()" id="startButton">Başlat</button>
+    </div>
+
+    <ul id="wordList">
+        <!-- Buraya JavaScript ile doldurulacak -->
+    </ul>
+
+    <script>
+        var currentWordIndex = 0;
+        var intervalId;
+        var wordsPerMinute;
+        var language = 'tr';
+
+        function handleFile() {
+            var fileInput = document.getElementById('fileInput');
+            var file = fileInput.files[0];
+
+            if (file) {
+                var reader = new FileReader();
+
+                reader.onload = function (e) {
+                    var content = e.target.result;
+                    var words = content.split(/\s+/);
+
+                    var wordList = document.getElementById("wordList");
+                    wordList.innerHTML = '';
+
+                    words.forEach(function (word) {
+                        var li = document.createElement("li");
+                        li.textContent = word;
+                        wordList.appendChild(li);
+                    });
+
+                    currentWordIndex = 0;
+
+                    document.querySelector('#title').style.display = 'none';
+                    document.querySelector('#fileLabel').style.display = 'none';
+                    document.querySelector('#fileInput').style.display = 'none';
+                    document.querySelector('#fileButton').style.display = 'none';
+                    document.querySelector('#wpmInputBox').style.display = 'flex';
+
+                    updateLanguage();
+                };
+
+                reader.readAsText(file);
+            }
+        }
+
+        function startWordInterval() {
+            document.querySelector('#wpmInputBox').style.display = 'none';
+            wordsPerMinute = document.getElementById('wpmInput').value || 150;
+            var words = document.querySelectorAll('#wordList li');
+            var speed = wordsPerMinute;
+
+            intervalId = setInterval(function () {
+                if (currentWordIndex < words.length) {
+                    words[currentWordIndex].classList.add('active');
+                    if (currentWordIndex > 0) {
+                        words[currentWordIndex - 1].classList.remove('active');
+                    }
+                    currentWordIndex++;
+
+                    clearInterval(intervalId);
+                    intervalId = setInterval(arguments.callee, 60000 / speed);
+                } else {
+                    clearInterval(intervalId);
+                }
+            }, 60000 / speed);
+        }
+
+        function changeLanguage(newLanguage) {
+            language = newLanguage;
+            updateLanguage();
+        }
+
+        function updateLanguage() {
+            var languageTexts = {
+                'tr': ['Tüm Kelimeler', 'Dosya Seç', 'Dosyayı Yükle', 'Dakikada gösterilecek kelime sayısı:'],
+                'en': ['All Words', 'Select File', 'Upload File', 'Words per minute:'],
+                'de': ['Alle Wörter', 'Datei auswählen', 'Datei hochladen', 'Wörter pro Minute:'],
+                'ru': ['Все слова', 'Выбрать файл', 'Загрузить файл', 'Слов в минуту:'],
+                'es': ['Todas las palabras', 'Seleccionar archivo', 'Subir archivo', 'Palabras por minuto:']
+            };
+
+            document.querySelector('#title').textContent = languageTexts[language][0];
+            document.querySelector('#fileLabel').textContent = languageTexts[language][1];
+            document.querySelector('#fileButton').textContent = languageTexts[language][2];
+            document.querySelector('#wpmLabel').textContent = languageTexts[language][3];
+            document.querySelector('#translateButton').textContent = languageTexts[language][2] + ' .pdf .txt ' + languageTexts[language][1];
+        }
+
+        function redirectToTranslate() {
+            window.location.href = 'translate.html';
+        }
+    </script>
+
+</body>
+
+</html>
